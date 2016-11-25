@@ -6,7 +6,7 @@
 
 u8 KS103_ReadOneByte(u8 address, u8 reg);
 void KS103_WriteOneByte(u8 address,u8 reg,u8 command);
-u16 Wave_test(void);
+int Wave_test(void);
 u16 Get_Range(u8 addr,int index);
 int Get_Barrier(u8 addr,int index);
 #endif

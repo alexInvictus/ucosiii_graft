@@ -445,11 +445,11 @@ ARM Macro Assembler    Page 7
   311 00000220                 END
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=usart\lib_mem_a.d -ousart\lib_mem_a.o -IC:\Users\peng02.li\Desk
-top\ucosIII_try\MDK-ARM\RTE -ID:\MDK5\ARM\PACK\ARM\CMSIS\4.2.0\CMSIS\Include -I
-D:\MDK5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include --predefine="__MICROLI
-B SETA 1" --predefine="__UVISION_VERSION SETA 514" --predefine="_RTE_ SETA 1" -
--predefine="STM32F429_439xx SETA 1" --list=lib_mem_a.lst ucosIII\uC-LIB\Ports\A
-RM-Cortex-M4\RealView\lib_mem_a.asm
+top\ucosIII_complete\MDK-ARM\RTE -ID:\MDK5\ARM\PACK\ARM\CMSIS\4.2.0\CMSIS\Inclu
+de -ID:\MDK5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include --predefine="__MI
+CROLIB SETA 1" --predefine="__UVISION_VERSION SETA 514" --predefine="_RTE_ SETA
+ 1" --predefine="STM32F429_439xx SETA 1" --list=lib_mem_a.lst ucosIII\uC-LIB\Po
+rts\ARM-Cortex-M4\RealView\lib_mem_a.asm
 
 
 

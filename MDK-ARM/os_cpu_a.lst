@@ -452,17 +452,17 @@ ARM Macro Assembler    Page 7
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=usart\os_cpu_a.d -ousart\os_cpu_a.o -IC:\Users\peng02.li\Deskto
-p\ucosIII_try\MDK-ARM\RTE -ID:\MDK5\ARM\PACK\ARM\CMSIS\4.2.0\CMSIS\Include -ID:
+p\ucosIII_complete\MDK-ARM\RTE -ID:\MDK5\ARM\PACK\ARM\CMSIS\4.2.0\CMSIS\Include
 
 
 
 ARM Macro Assembler    Page 8 
 
 
-\MDK5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include --predefine="__MICROLIB 
-SETA 1" --predefine="__UVISION_VERSION SETA 514" --predefine="_RTE_ SETA 1" --p
-redefine="STM32F429_439xx SETA 1" --list=os_cpu_a.lst ucosIII\uCOS-III\Ports\AR
-M-Cortex-M4\Generic\RealView\os_cpu_a.asm
+ -ID:\MDK5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include --predefine="__MICR
+OLIB SETA 1" --predefine="__UVISION_VERSION SETA 514" --predefine="_RTE_ SETA 1
+" --predefine="STM32F429_439xx SETA 1" --list=os_cpu_a.lst ucosIII\uCOS-III\Por
+ts\ARM-Cortex-M4\Generic\RealView\os_cpu_a.asm
 
 
 

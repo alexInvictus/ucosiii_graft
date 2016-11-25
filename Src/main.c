@@ -33,11 +33,16 @@
 /* Includes ------------------------------------------------------------------*/
 #define _C_MAIN_
 #include "all.h"
-
+//起始任务
+//设置任务优先级
 #define START_TASK_PRIO     3
+//设置任务堆栈的大小
 #define START_STK_SIZE      512
+//任务控制块
 OS_TCB StartTaskTCB;
+//任务堆栈
 CPU_STK START_TASK_STK[START_STK_SIZE];
+//任务函数
 void start_task(void *p_arg);
 
 //LED0任务
@@ -52,7 +57,7 @@ CPU_STK LED0_TASK_STK[LED0_STK_SIZE];
 //任务函数
 void led0_task(void *p_arg);
 
-//LED0任务
+//串口任务
 //设置任务优先级
 #define WAVE_TASK_PRIO			5
 //设置任务堆栈大小
@@ -60,10 +65,36 @@ void led0_task(void *p_arg);
 //任务控制块
 OS_TCB WAVETaskTCB;
 //任务堆栈
-CPU_STK WAVE_TASK_STK[LED0_STK_SIZE];
+CPU_STK WAVE_TASK_STK[WAVE_STK_SIZE];
 //任务函数
 void wave_task(void *p_arg);
 
+//lcd12864任务
+//设置任务优先级
+#define LCD_TASK_PRIO			6
+//设置任务堆栈大小
+#define LCD_STK_SIZE			128
+//任务控制块
+OS_TCB LCDTaskTCB;
+//任务堆栈
+CPU_STK LCD_TASK_STK[LCD_STK_SIZE];
+//任务函数
+void lcd_task(void *p_arg);
+
+//串口任务
+//设置任务优先级
+#define MOTOR_TASK_PRIO			7
+//设置任务堆栈大小
+#define MOTOR_STK_SIZE			128
+//任务控制块
+OS_TCB MOTORTaskTCB;
+//任务堆栈
+CPU_STK MOTOR_TASK_STK[WAVE_STK_SIZE];
+//任务函数
+void motor_task(void *p_arg);
+
+
+OS_SEM wave_sem; //定义一个信号量，传递超声波控制信号
 /* printff重定向函数重定向串口1 ---------------------------------------------------------*/
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -89,18 +120,19 @@ int main(void)
   delay_init(180);                                       //微秒级数据的配置
   /* Initialize all configured peripherals */
   MX_GPIO_Init();                                        //GPIO的初始化配置
-//  MX_DMA_Init();                                         //DMA通道的配置
+  MX_DMA_Init();                                         //DMA通道的配置
 //  MX_USART2_UART_Init();                                 //串口2的配置  for RFID读写模块
   MX_USART3_UART_Init();                                 //串口3的配置  for wifi模块
 //  MX_TIM13_Init();                                       //定时器13产生左轮PWM波
 //  MX_TIM14_Init();                                       //定时器14产生右轮PWM波
 //	MX_TIM3_Init();
-//  MX_ADC1_Init();                                        //ADC初始化设置
-//  IIC_Init_2();                                          //模拟iic for wave初始化
+  MX_ADC1_Init();                                        //ADC初始化设置
+  IIC_Init_2();                                          //模拟iic for wave初始化
 //	IIC_Init();                                            //模拟iic for 24c02初始化
   /* Initialize interrupts */
-//  MX_NVIC_Init();                                        //中断优先级的设置
-	OSInit(&err);                       //UCOS初始化
+  MX_NVIC_Init();                                       //中断优先级的设置
+  Show_Static();
+	OSInit(&err);                                           //UCOS初始化
 	OS_CRITICAL_ENTER();
 	
 	OSTaskCreate((OS_TCB*  )&StartTaskTCB,                   //任务控制块
@@ -141,6 +173,10 @@ void start_task(void *p_arg)
 #endif
 	
 	 OS_CRITICAL_ENTER();                     //进入临界区
+	 OSSemCreate((OS_SEM*   )&wave_sem,
+	             (CPU_CHAR* )"wave_sem",
+	             (OS_SEM_CTR)1,
+							 (OS_ERR*   )&err);
 	 OSTaskCreate((OS_TCB*  )&Led0TaskTCB,                   //任务控制块
 									(CPU_CHAR*      )"led0 task",                         //传递给任务函数的参数
 									(OS_TASK_PTR    )led0_task,             //任务堆栈栈顶
@@ -167,6 +203,32 @@ void start_task(void *p_arg)
 									(void*          )0,
 									(OS_OPT         )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
 									(OS_ERR*        )&err);
+	 OSTaskCreate((OS_TCB*  )&LCDTaskTCB,                   //任务控制块
+									(CPU_CHAR*      )"lcd task",                         //传递给任务函数的参数
+									(OS_TASK_PTR    )lcd_task,             //任务堆栈栈顶
+									(void*          )0,                      //任务优先级
+									(OS_PRIO        )LCD_TASK_PRIO,           //任务ID，这里设置为和优先级一样
+									(CPU_STK*       )&LCD_TASK_STK[0],        //任务堆栈栈底
+									(CPU_STK_SIZE   )LCD_STK_SIZE/10,            //任务堆栈大小
+									(CPU_STK_SIZE   )LCD_STK_SIZE,                         //用户补充的存储区
+									(OS_MSG_QTY     )0,                      //任务选项,为了保险起见，所有任务都保存浮点寄存器的值
+                  (OS_TICK        )0,
+									(void*          )0,
+									(OS_OPT         )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
+									(OS_ERR*        )&err);
+   OSTaskCreate((OS_TCB*  )&MOTORTaskTCB,                   //任务控制块
+									(CPU_CHAR*      )"motor task",                         //传递给任务函数的参数
+									(OS_TASK_PTR    )motor_task,             //任务堆栈栈顶
+									(void*          )0,                      //任务优先级
+									(OS_PRIO        )MOTOR_TASK_PRIO,           //任务ID，这里设置为和优先级一样
+									(CPU_STK*       )&MOTOR_TASK_STK[0],        //任务堆栈栈底
+									(CPU_STK_SIZE   )MOTOR_STK_SIZE/10,            //任务堆栈大小
+									(CPU_STK_SIZE   )MOTOR_STK_SIZE,                         //用户补充的存储区
+									(OS_MSG_QTY     )0,                      //任务选项,为了保险起见，所有任务都保存浮点寄存器的值
+                  (OS_TICK        )0,
+									(void*          )0,
+									(OS_OPT         )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
+									(OS_ERR*        )&err);									
 	OS_CRITICAL_EXIT();							
 }
 
@@ -185,14 +247,42 @@ void led0_task(void *p_arg)
 
 //LED1任务
 void wave_task(void *p_arg)
+{	 
+	OS_ERR err;
+  int wave=0;	
+	while(1)
+	{		
+		wave=Wave_test();
+		printf("%d\r\n",wave);
+		if(wave==2)
+		{
+		 	OSSemPost(&wave_sem,OS_OPT_POST_1,&err);
+		}
+		delay_ms(100);
+	}
+}
+
+//motor任务
+void motor_task(void *p_arg)
+{	 	
+	OS_ERR err;
+	while(1)
+	{		
+   OSSemPend(&wave_sem,0,OS_OPT_PEND_BLOCKING,0,&err);
+	 printf("a\r\n");
+	}
+}
+
+//lcd任务
+void lcd_task(void *p_arg)
 {	  
 	CPU_SR_ALLOC();
 	while(1)
 	{
 		OS_CRITICAL_ENTER();
-		printf("111");
+		Voltage_Test();
 		OS_CRITICAL_EXIT();
-		delay_ms(1000);
+		delay_ms(2000);
 	}
 }
 
