@@ -93,6 +93,17 @@ CPU_STK MOTOR_TASK_STK[WAVE_STK_SIZE];
 //任务函数
 void motor_task(void *p_arg);
 
+//24C02任务
+//设置任务优先级
+#define C2402_TASK_PRIO			8
+//设置任务堆栈大小
+#define C2402_STK_SIZE			128
+//任务控制块
+OS_TCB C2402TaskTCB;
+//任务堆栈
+CPU_STK C2402_TASK_STK[WAVE_STK_SIZE];
+//任务函数
+void c2402_task(void *p_arg);
 
 OS_SEM wave_sem; //定义一个信号量，传递超声波控制信号
 /* printff重定向函数重定向串口1 ---------------------------------------------------------*/
@@ -128,7 +139,7 @@ int main(void)
 //	MX_TIM3_Init();
   MX_ADC1_Init();                                        //ADC初始化设置
   IIC_Init_2();                                          //模拟iic for wave初始化
-//	IIC_Init();                                            //模拟iic for 24c02初始化
+	IIC_Init();                                            //模拟iic for 24c02初始化
   /* Initialize interrupts */
   MX_NVIC_Init();                                       //中断优先级的设置
   Show_Static();
@@ -228,8 +239,22 @@ void start_task(void *p_arg)
                   (OS_TICK        )0,
 									(void*          )0,
 									(OS_OPT         )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
+									(OS_ERR*        )&err);
+   OSTaskCreate((OS_TCB*  )&C2402TaskTCB,                   //任务控制块
+									(CPU_CHAR*      )"c2402 task",                         //传递给任务函数的参数
+									(OS_TASK_PTR    )c2402_task,             //任务堆栈栈顶
+									(void*          )0,                      //任务优先级
+									(OS_PRIO        )C2402_TASK_PRIO,           //任务ID，这里设置为和优先级一样
+									(CPU_STK*       )&C2402_TASK_STK[0],        //任务堆栈栈底
+									(CPU_STK_SIZE   )C2402_STK_SIZE/10,            //任务堆栈大小
+									(CPU_STK_SIZE   )C2402_STK_SIZE,                         //用户补充的存储区
+									(OS_MSG_QTY     )0,                      //任务选项,为了保险起见，所有任务都保存浮点寄存器的值
+                  (OS_TICK        )0,
+									(void*          )0,
+									(OS_OPT         )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
 									(OS_ERR*        )&err);									
-	OS_CRITICAL_EXIT();							
+	OS_CRITICAL_EXIT();
+  OSTaskDel((OS_TCB*)0,&err);									
 }
 
 //LED0任务
@@ -238,14 +263,14 @@ void led0_task(void *p_arg)
 	p_arg=p_arg;
 	while(1)
 	{
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4,  GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2,  GPIO_PIN_SET);
 		delay_ms(80);
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4,  GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2,  GPIO_PIN_RESET);
 		delay_ms(920);
 	}
 }
 
-//LED1任务
+//WAVE任务
 void wave_task(void *p_arg)
 {	 
 	OS_ERR err;
@@ -270,6 +295,22 @@ void motor_task(void *p_arg)
 	{		
    OSSemPend(&wave_sem,0,OS_OPT_PEND_BLOCKING,0,&err);
 	 printf("a\r\n");
+	}
+}
+
+//24c02任务
+void c2402_task(void *p_arg)
+{
+	OS_ERR err;
+  CPU_SR_ALLOC();	
+	while(1)
+	{
+  OS_CRITICAL_ENTER();		
+  Eeprom_Read();
+	Send_Id();
+	OS_CRITICAL_EXIT();
+	delay_ms(100);
+  OSTaskDel((OS_TCB*)0,&err);			
 	}
 }
 
@@ -304,7 +345,7 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 
 #endif
- 
+
 /**
   * @}
   */ 
